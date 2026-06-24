@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datatables Modal</title>    
+    <title>Datatables Expand Below</title>    
 
-    <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.8/css/responsive.dataTables.css" />
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>  
-    <!-- DataTables JS -->     
     <script src="https://cdn.datatables.net/2.3.8/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/responsive/3.0.8/js/dataTables.responsive.js"></script>
     <script src="https://cdn.datatables.net/responsive/3.0.8/js/responsive.dataTables.js"></script>
@@ -69,7 +66,8 @@
             background: rgba(0, 0, 0, 0.15);
         }
 
-        #companyTable tbody tr {
+        /* Indicate that only the Capability column cells are interactive */
+        #companyTable tbody td:nth-child(3) {
             cursor: pointer;
         }
 
@@ -79,63 +77,25 @@
             text-decoration: underline;
         }
 
-        /* Detail Modal Styling */
-        .custom-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .custom-modal {
-            background: #fff;
-            padding: 24px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            position: relative;
+        /* Child Details Area Styling */
+        .details-container {
+            background-color: #f9f9f9;
+            padding: 12px 18px;
+            border-left: 4px solid #0056b3;
             font-family: sans-serif;
-        }
-
-        .custom-modal h3 {
-            margin-top: 0;
+            font-size: 14px;
+            line-height: 1.5;
             color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
         }
-
-        .custom-modal .modal-body {
-            margin-top: 15px;
-            line-height: 1.6;
-            color: #555;
-        }
-
-        .custom-modal-close {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #aaa;
-        }
-
-        .custom-modal-close:hover {
-            color: #000;
+        
+        /* Optional style to slightly highlight active open row */
+        tr.dt-has-child {
+            background-color: #f4f7fa !important;
         }
     </style>
 
      
     <script>
-
         let CompanyStr = "Company";
         let IndustryStr = "Industry";
         let CapabilityStr = "Capability";
@@ -178,6 +138,14 @@
             });
         }
 
+        // Helper function to format the expandable details layout below the row
+        function formatDetails(rowData) {
+            return '<div class="details-container">' +
+                   '<b>' + IndustryStr + '</b> : ' + rowData[1] + '<br>' +
+                   '<b>' + CapabilityStr + '</b> : ' + rowData[2] +
+                   '</div>';
+        }
+
         $(document).ready(function() {
             $('#companyTable thead tr')
                 .clone(true)
@@ -188,11 +156,9 @@
                 orderCellsTop: true,
                 columnDefs: [
                     {
-                        targets: 2, // Target the 3rd column (Capability)
+                        targets: 2, 
                         render: function (data, type, row) {
-                            // Only modify the visual presentation layer
                             if (type === 'display' && data) {
-                                // Clean up extra spaces/newlines for accurate word counting
                                 let cleanData = data.replace(/\s+/g, ' ').trim();
                                 let words = cleanData.split(' ');
                                 
@@ -205,7 +171,6 @@
                     }
                 ],
                 initComplete: function () {
-
                     makeColumnsResizable('#companyTable');
 
                     var api = this.api();
@@ -217,11 +182,9 @@
                         origHeader.wrapInner('<div class="header-container"></div>');
 
                         var toggleBtn = $('<button class="filter-toggle-btn" title="Toggle Filter">☰</button>');
-
                         origHeader.find('.header-container').append(toggleBtn);
 
                         var filterCell = $('.filters th').eq(colIdx);
-
                         filterCell.html('<input type="text" placeholder="Filter ' + title + '" />');
 
                         toggleBtn.on('click', function (e) {
@@ -242,45 +205,28 @@
                 }
             });
 
-            // Handle Row Click to trigger the Popup Modal with full details
-            $('#companyTable tbody').on('click', 'tr', function () {
-                // Get original un-truncated data for this row
-                var rowData = myTable.row(this).data();
-                
-                if (rowData) {
-                    var companyName = rowData[0];
-                    var industryText = rowData[1];
-                    var capabilityText = rowData[2];
+            // Handle click ONLY on the 3rd column (Capability cell) to expand below
+            $('#companyTable tbody').on('click', 'td:nth-child(3)', function (e) {
+                var tr = $(this).closest('tr');
+                var row = myTable.row(tr);
 
-                    // Populate and display the custom modal
-                    $('#modalTitle').text(companyName);
-                    $('#modalBody').html("<b>" + IndustryStr + "</b> : " + industryText + "<br>" +
-                                        "<b>" + CapabilityStr + "</b> : " + capabilityText);
-                    $('#customDetailModal').css('display', 'flex');
-                }
-            });
-
-            // Close modal bindings
-            $('.custom-modal-close, .custom-modal-overlay').on('click', function(e) {
-                if (e.target === this) {
-                    $('#customDetailModal').hide();
+                if (row.child.isShown()) {
+                    // This row is already open - close it
+                    row.child.hide();
+                    tr.removeClass('dt-has-child');
+                } else {
+                    // Open this row and inject the details container layout
+                    var rowData = row.data();
+                    if (rowData) {
+                        row.child(formatDetails(rowData)).show();
+                        tr.addClass('dt-has-child');
+                    }
                 }
             });
         });
     </script>
-    
 </head>
-
-
 <body>
-
-    <div id="customDetailModal" class="custom-modal-overlay">
-        <div class="custom-modal">
-            <button class="custom-modal-close">&times;</button>
-            <h3 id="modalTitle">Details</h3>
-            <div id="modalBody" class="modal-body"></div>
-        </div>
-    </div>
 
     <table id="companyTable" class="display nowrap">
         <thead>
