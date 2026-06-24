@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datatables Modal</title>    
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.8/css/responsive.dataTables.css" />
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>  
+    <!-- DataTables JS -->     
+    <script src="https://cdn.datatables.net/2.3.8/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.8/js/dataTables.responsive.js"></script>
+    <script src="https://cdn.datatables.net/responsive/3.0.8/js/responsive.dataTables.js"></script>
+
+    <style>
+        .filters {
+            display: none;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .filter-toggle-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 0 5px;
+            margin-left: auto;
+            color: #888;
+            transition: color 0.2s;
+        }
+
+        .filter-toggle-btn:hover {
+            color: #333;
+        }
+
+        .filters input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 4px;
+            margin-top: 5px;
+        }
+
+        #companyTable th {
+            position: relative;
+        }
+
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            width: 6px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+            z-index: 100;
+        }
+
+        .resize-handle:hover {
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        #companyTable tbody tr {
+            cursor: pointer;
+        }
+    </style>
+
+     
+    <script>
+
+        function makeColumnsResizable(tableId) {
+            const table = $(tableId);
+
+            table.find('thead tr:first th').each(function (colIdx) {
+                const th = $(this);
+
+                if (th.find('.resize-handle').length) return;
+
+                th.append('<div class="resize-handle"></div>');
+
+                th.find('.resize-handle').on('mousedown', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const startX = e.pageX;
+                    const startWidth = th.outerWidth();
+
+                    $(document).on('mousemove.columnResize', function (e) {
+                        const newWidth = startWidth + (e.pageX - startX);
+
+                        if (newWidth > 50) {
+                            table.find('tr').each(function () {
+                                $(this).children().eq(colIdx).css({
+                                    width: newWidth + 'px',
+                                    minWidth: newWidth + 'px',
+                                    maxWidth: newWidth + 'px'
+                                });
+                            });
+                        }
+                    });
+
+                    $(document).on('mouseup.columnResize', function () {
+                        $(document).off('.columnResize');
+                    });
+                });
+            });
+        }
+
+        $(document).ready(function() {
+            $('#companyTable thead tr')
+                .clone(true)
+                .addClass('filters')
+                .appendTo('#companyTable thead');
+
+            let myTable = new DataTable('#companyTable', {
+                orderCellsTop: true,
+                responsive: {
+                    details: {
+                        type: 'column',
+                        target: 'tr',
+                        display: DataTable.Responsive.display.modal({
+                            header: function (row) {
+                                var data = row.data();
+                                return 'Details for ' + data[0];
+                            }
+                        }),
+                        renderer: DataTable.Responsive.renderer.tableAll()
+                    }
+                },
+                initComplete: function () {
+                    makeColumnsResizable('#companyTable');
+
+                    var api = this.api();
+
+                    api.columns().eq(0).each(function (colIdx) {
+                        var origHeader = $(api.column(colIdx).header());
+                        var title = origHeader.clone().children().remove().end().text().trim();
+
+                        origHeader.wrapInner('<div class="header-container"></div>');
+
+                        var toggleBtn = $('<button class="filter-toggle-btn" title="Toggle Filter">☰</button>');
+                        origHeader.find('.header-container').append(toggleBtn);
+
+                        var filterCell = $('.filters th').eq(colIdx);
+                        filterCell.html('<input type="text" placeholder="Filter ' + title + '" />');
+
+                        toggleBtn.on('click', function (e) {
+                            e.stopPropagation();
+                            $('.filters').toggle();
+                        });
+
+                        $('input', filterCell).on('keyup change', function (e) {
+                            e.stopPropagation();
+
+                            if (api.column(colIdx).search() !== this.value) {
+                                api.column(colIdx)
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+            
+        });
+    </script>
+  
+</head>`
+<body>
+
+
+    <table id="companyTable" class="display nowrap">
+        <!-- please put your table column headers here -->
+        <thead>
+            <tr>
+                <th>Company</th>
+                <th>Industry</th>
+                <th>Capability</th>
+            </tr>
+        </thead>
+          <!-- please put your table rows and data here -->
+        <tbody>
+            <tr>
+                <td>TechNova Solutions</td>
+                <td>Software</td>
+                <td>Cloud-based enterprise resource planning and workflow automation platforms.</td>
+            </tr>
+            
+            <tr>
+                <td>GreenLeaf Organics</td>
+                <td>Agriculture</td>
+                <td>Sustainable farming, crop management, and organic food production.</td>
+            </tr>
+            
+            <tr>
+                <td>BlueWave Logistics</td>
+                <td>Transportation</td>
+                <td>Supply chain optimization, freight forwarding, and warehouse management.</td>
+            </tr>
+            
+            <tr>
+                <td>Vertex Manufacturing</td>
+                <td>Industrial</td>
+                <td>Precision engineering and large-scale component manufacturing.</td>
+            </tr>
+            
+            <tr>
+                <td>Skyline Telecom</td>
+                <td>Telecommunications</td>
+                <td>Fiber network deployment, broadband services, and communication infrastructure.</td>
+            </tr>
+            
+            <tr>
+                <td>BrightPath Financial</td>
+                <td>Finance</td>
+                <td>Investment management, risk analysis, and wealth planning solutions.</td>
+            </tr>
+            
+            <tr>
+                <td>OceanFresh Foods</td>
+                <td>Food</td>
+                <td>Seafood processing, cold-chain logistics, and food safety compliance.</td>
+            </tr>
+            
+            <tr>
+                <td>MedCore Health</td>
+                <td>Healthcare</td>
+                <td>Hospital information systems, patient management, and medical analytics.</td>
+            </tr>
+            
+            <tr>
+                <td>UrbanBuild Construction</td>
+                <td>Construction</td>
+                <td>Commercial building development, project management, and infrastructure services.</td>
+            </tr>
+            
+            <tr>
+                <td>SolarGrid Energy</td>
+                <td>Energy</td>
+                <td>Renewable energy generation, solar installations, and grid modernization.</td>
+            </tr>
+            
+            <tr>
+                <td>NextGen Retail</td>
+                <td>Retail</td>
+                <td>E-commerce platforms, inventory tracking, and customer loyalty programs.</td>
+            </tr>
+            
+            <tr>
+                <td>Apex Security Group</td>
+                <td>Security</td>
+                <td>Cybersecurity monitoring, threat intelligence, and incident response services.</td>
+            </tr>
+            
+            <tr>
+                <td>Golden Harvest Mills</td>
+                <td>Food Processing</td>
+                <td>Grain processing, packaging operations, and quality assurance programs.</td>
+            </tr>
+            
+            <tr>
+                <td>Fusion Media Labs</td>
+                <td>Media</td>
+                <td>Digital content production, advertising campaigns, and brand management.</td>
+            </tr>
+            
+            <tr>
+                <td>Precision Auto Parts</td>
+                <td>Automotive</td>
+                <td>OEM component manufacturing, quality testing, and supply chain integration.</td>
+            </tr>
+            
+            <tr>
+                <td>Crystal Water Systems</td>
+                <td>Utilities</td>
+                <td>Water treatment technologies, distribution systems, and environmental compliance.</td>
+            </tr>
+            
+            <tr>
+                <td>Global Education Partners</td>
+                <td>Education</td>
+                <td>Online learning platforms, curriculum development, and workforce training.</td>
+            </tr>
+            
+            <tr>
+                <td>SilverPeak Mining</td>
+                <td>Mining</td>
+                <td>Mineral extraction, geological surveying, and resource management.</td>
+            </tr>
+            
+            <tr>
+                <td>Quantum Analytics</td>
+                <td>Data & Analytics</td>
+                <td>Business intelligence dashboards, predictive modeling, and AI-driven insights.</td>
+            </tr>
+            
+            <tr>
+                <td>Harbor Trade Corporation</td>
+                <td>Import & Export</td>
+                <td>
+                    International sourcing, customs compliance, and distribution network management.
+                    The company specializes in handling complex multi-country procurement processes,
+                    coordinating shipments across multiple regions, and ensuring timely delivery of
+                    products through strategic partnerships with logistics providers worldwide.
+                </td>
+            </tr>
+            
+            <tr>
+                <td>PeakVision Technologies</td>
+                <td>Technology</td>
+                <td>
+                    Advanced software development, machine learning solutions, and enterprise digital
+                    transformation initiatives. The organization supports large-scale modernization
+                    projects that involve legacy system migration, cloud adoption, process automation,
+                    and the implementation of data-driven operational strategies.
+                </td>
+            </tr>
+            
+            <tr>
+                <td>NorthStar Aviation</td>
+                <td>Aerospace</td>
+                <td>Aircraft maintenance, fleet operations, and aviation safety management.</td>
+            </tr>
+            
+            <tr>
+                <td>EcoSmart Packaging</td>
+                <td>Packaging</td>
+                <td>Biodegradable packaging design, manufacturing, and sustainability consulting.</td>
+            </tr>
+
+        </tbody>
+    </table>
+
+</body>
+</html>
