@@ -178,6 +178,13 @@
             });
         }
 
+        function formatDetails(rowData) {
+            return '<div>' +                   
+                   '<b>' + IndustryStr + '</b> : ' + rowData[1] + '<br>' +
+                   '<b>' + CapabilityStr + '</b> : ' + rowData[2] +
+                   '</div>';
+        }
+        
         $(document).ready(function() {
             $('#companyTable thead tr')
                 .clone(true)
@@ -242,10 +249,12 @@
                 }
             });
 
-            // Handle Row Click to trigger the Popup Modal with full details
-            $('#companyTable tbody').on('click', 'tr', function () {
-                // Get original un-truncated data for this row
-                var rowData = myTable.row(this).data();
+            // Handle click ONLY on the 3rd column (Capability cell)  to trigger the Popup Modal with full details
+            $('#companyTable tbody').on('click', 'td:nth-child(3)', function () {
+               
+                var tr = $(this).closest('tr');
+                var rowData = myTable.row(tr).data();
+               
                 
                 if (rowData) {
                     var companyName = rowData[0];
@@ -254,8 +263,7 @@
 
                     // Populate and display the custom modal
                     $('#modalTitle').text(companyName);
-                    $('#modalBody').html("<b>" + IndustryStr + "</b> : " + industryText + "<br>" +
-                                        "<b>" + CapabilityStr + "</b> : " + capabilityText);
+                    $('#modalBody').html(formatDetails(rowData));
                     $('#customDetailModal').css('display', 'flex');
                 }
             });

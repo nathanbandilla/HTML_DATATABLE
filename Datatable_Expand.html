@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Datatables Expand Below</title>    
+    <title>Datatables Expand Below with Text Wrapping</title>    
 
     <link rel="stylesheet" href="https://cdn.datatables.net/2.3.8/css/dataTables.dataTables.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/3.0.8/css/responsive.dataTables.css" />
@@ -77,7 +77,7 @@
             text-decoration: underline;
         }
 
-        /* Child Details Area Styling */
+        /* Child Details Area Styling with explicit wrapping rules */
         .details-container {
             background-color: #f9f9f9;
             padding: 12px 18px;
@@ -86,9 +86,13 @@
             font-size: 14px;
             line-height: 1.5;
             color: #333;
+            
+            /* Text wrapping fixes for very long content values */
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         
-        /* Optional style to slightly highlight active open row */
         tr.dt-has-child {
             background-color: #f4f7fa !important;
         }
@@ -141,6 +145,7 @@
         // Helper function to format the expandable details layout below the row
         function formatDetails(rowData) {
             return '<div class="details-container">' +
+                   '<b>' + CompanyStr + '</b> : ' + rowData[0] + '<br>' +
                    '<b>' + IndustryStr + '</b> : ' + rowData[1] + '<br>' +
                    '<b>' + CapabilityStr + '</b> : ' + rowData[2] +
                    '</div>';
@@ -211,11 +216,9 @@
                 var row = myTable.row(tr);
 
                 if (row.child.isShown()) {
-                    // This row is already open - close it
                     row.child.hide();
                     tr.removeClass('dt-has-child');
                 } else {
-                    // Open this row and inject the details container layout
                     var rowData = row.data();
                     if (rowData) {
                         row.child(formatDetails(rowData)).show();
